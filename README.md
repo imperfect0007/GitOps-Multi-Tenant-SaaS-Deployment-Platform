@@ -158,7 +158,7 @@ Isolation is enforced via:
 ## Roadmap
 
 - [x] **Day 1** — System design, architecture, and project structure
-- [ ] **Day 2** — Backend project setup (FastAPI, PostgreSQL, Docker)
+- [x] **Day 2** — Local Kubernetes cluster, ArgoCD installation, test deployment
 - [ ] **Day 3** — Authentication system (JWT signup/login)
 - [ ] **Day 4** — Tenant and project management APIs
 - [ ] **Day 5** — GitOps repo automation (generate & commit K8s manifests)
