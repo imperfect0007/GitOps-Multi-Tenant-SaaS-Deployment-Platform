@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tenant-a-nginx
+  namespace: argocd
+  labels:
+    tenant: tenant-a
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/imperfect0007/gitops-repo.git
+    targetRevision: main
+    path: tenants/tenant-a/nginx
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tenant-a
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false

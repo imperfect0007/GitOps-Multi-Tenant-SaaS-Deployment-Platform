@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-a
+  labels:
+    platform: gitops-saas
+    tenant: tenant-a
+    managed-by: platform

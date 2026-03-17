@@ -160,7 +160,7 @@ Isolation is enforced via:
 - [x] **Day 1** — System design, architecture, and project structure
 - [x] **Day 2** — Local Kubernetes cluster, ArgoCD installation, test deployment
 - [x] **Day 3** — GitOps pipeline (Git → ArgoCD → Kubernetes auto-deploy)
-- [ ] **Day 4** — Tenant and project management APIs
+- [x] **Day 4** — Multi-tenant architecture (namespace isolation, quotas, network policies)
 - [ ] **Day 5** — GitOps repo automation (generate & commit K8s manifests)
 - [ ] **Day 6** — Kubernetes manifest templates and Helm charts
 - [ ] **Day 7** — ArgoCD integration and deployment pipeline
