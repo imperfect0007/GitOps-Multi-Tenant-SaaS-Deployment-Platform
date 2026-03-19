@@ -1,3 +1,7 @@
+# Local DB (use migrations in production)
+*.db
+backend/*.db
+
 # Python
 __pycache__/
 *.py[cod]
