@@ -1,0 +1,29 @@
+# Example: copy to your GitOps repo at infrastructure/platform-backend/deployment.yaml
+# CI will update the image line to DOCKER_USERNAME/backend:latest
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-backend
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: platform-backend
+  template:
+    metadata:
+      labels:
+        app: platform-backend
+    spec:
+      containers:
+        - name: backend
+          image: your-dockerhub-username/backend:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: database-url
+                  optional: true
