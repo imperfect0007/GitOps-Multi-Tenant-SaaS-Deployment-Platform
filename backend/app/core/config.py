@@ -18,6 +18,12 @@ class Settings(BaseSettings):
 
     KUBECONFIG_PATH: str | None = None
 
+    # Day 10: Custom domains + HTTPS
+    BASE_DOMAIN: str = ""  # e.g. yourplatform.com — when set, Ingress + domain are generated per project
+    TLS_ENABLED: bool = False  # use cert-manager and add TLS to Ingress
+    CERT_MANAGER_ISSUER: str = "letsencrypt-prod"  # ClusterIssuer name
+    INGRESS_CLASS: str = "nginx"
+
     class Config:
         env_file = ".env"
         extra = "ignore"

@@ -1,0 +1,22 @@
+# Day 10: HorizontalPodAutoscaler example (optional production feature).
+# Scale the deployment between minReplicas and maxReplicas based on CPU.
+# Replace namespace and scaleTargetRef.name with your tenant and deployment name.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: webapp
+  namespace: tenant-a
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: webapp
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70

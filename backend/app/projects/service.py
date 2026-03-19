@@ -4,7 +4,12 @@ from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
 from app.core.config import settings
-from app.gitops.manifests import generate_deployment, generate_service, generate_argocd_application
+from app.gitops.manifests import (
+    generate_deployment,
+    generate_service,
+    generate_ingress,
+    generate_argocd_application,
+)
 from app.gitops.service import push_manifests
 
 logger = logging.getLogger(__name__)
@@ -13,7 +18,7 @@ logger = logging.getLogger(__name__)
 def deploy_project(name: str, namespace: str, image: str, replicas: int, port: int):
     """
     Full deployment pipeline:
-    1. Generate K8s manifests
+    1. Generate K8s manifests (Deployment, Service, optional Ingress)
     2. Push to GitOps repo
     3. Create ArgoCD Application
     """
@@ -24,6 +29,23 @@ def deploy_project(name: str, namespace: str, image: str, replicas: int, port: i
         "deployment.yaml": deployment_yaml,
         "service.yaml": service_yaml,
     }
+
+    if settings.BASE_DOMAIN:
+        host = f"{name}.{namespace}.{settings.BASE_DOMAIN}"
+        service_name = f"{name}-service"
+        tls_secret = f"{name}-{namespace}-tls" if settings.TLS_ENABLED else None
+        issuer = settings.CERT_MANAGER_ISSUER if settings.TLS_ENABLED else None
+        ingress_yaml = generate_ingress(
+            name=name,
+            namespace=namespace,
+            host=host,
+            service_name=service_name,
+            service_port=port,
+            ingress_class=settings.INGRESS_CLASS,
+            tls_secret_name=tls_secret,
+            cert_manager_issuer=issuer,
+        )
+        manifests["ingress.yaml"] = ingress_yaml
 
     push_manifests(namespace, name, manifests)
 

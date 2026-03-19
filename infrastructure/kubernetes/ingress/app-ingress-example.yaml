@@ -1,0 +1,27 @@
+# Day 10: Example Ingress for a tenant app (with optional TLS).
+# Replace host and namespace with your tenant/project. Ensure DNS points to Ingress LB.
+# For TLS: install cert-manager and apply cluster-issuer.yaml; cert-manager will create the secret.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webapp-ingress
+  namespace: tenant-a
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - webapp.tenant-a.yourplatform.com
+    secretName: webapp-tenant-a-tls
+  rules:
+  - host: webapp.tenant-a.yourplatform.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webapp-service
+            port:
+              number: 80

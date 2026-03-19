@@ -1,0 +1,17 @@
+# Day 10: cert-manager ClusterIssuer for Let's Encrypt (HTTPS).
+# Prereqs: cert-manager installed, NGINX Ingress with HTTP-01 support.
+# Replace your-email@example.com with your email for ACME account.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    email: your-email@example.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx

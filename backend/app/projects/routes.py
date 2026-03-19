@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
@@ -21,6 +22,14 @@ def _get_owned_tenant(tenant_id: int, db: Session, user: User) -> Tenant:
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
     return tenant
+
+
+def _project_response(project: Project, namespace: str | None = None) -> ProjectResponse:
+    data = ProjectResponse.model_validate(project).model_dump()
+    ns = namespace or (project.tenant.namespace if project.tenant else None)
+    if settings.BASE_DOMAIN and ns:
+        data["domain"] = f"{project.name}.{ns}.{settings.BASE_DOMAIN}"
+    return ProjectResponse(**data)
 
 
 @router.post(
@@ -69,7 +78,7 @@ def create_project(
         db.commit()
         db.refresh(project)
 
-    return project
+    return _project_response(project, namespace=tenant.namespace)
 
 
 @router.get("/tenants/{tenant_id}/projects", response_model=list[ProjectResponse])
@@ -80,8 +89,8 @@ def list_projects(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _get_owned_tenant(tenant_id, db, current_user)
-    return (
+    tenant = _get_owned_tenant(tenant_id, db, current_user)
+    projects = (
         db.query(Project)
         .filter(Project.tenant_id == tenant_id)
         .order_by(Project.created_at.desc())
@@ -89,6 +98,7 @@ def list_projects(
         .limit(limit)
         .all()
     )
+    return [_project_response(p, namespace=tenant.namespace) for p in projects]
 
 
 @router.get("/projects/{project_id}", response_model=ProjectResponse)
@@ -101,7 +111,7 @@ def get_project(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     _get_owned_tenant(project.tenant_id, db, current_user)
-    return project
+    return _project_response(project)
 
 
 @router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)

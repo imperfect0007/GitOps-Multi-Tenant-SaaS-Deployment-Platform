@@ -57,6 +57,8 @@ jobs:
   update-gitops:
     needs: build-and-push
     runs-on: ubuntu-latest
+    # Set variable GITOPS_UPDATE_ENABLED = true (Actions → Variables) to run this job.
+    # Requires secrets: GITOPS_REPO_URL (owner/repo), GITOPS_TOKEN.
     if: vars.GITOPS_UPDATE_ENABLED == 'true'
 
     steps:

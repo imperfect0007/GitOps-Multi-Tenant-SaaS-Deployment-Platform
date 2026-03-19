@@ -21,6 +21,7 @@ class ProjectResponse(BaseModel):
     tenant_id: int
     created_at: datetime
     updated_at: datetime | None
+    domain: str | None = None  # Day 10: e.g. webapp.tenant-a.yourplatform.com when BASE_DOMAIN set
 
     class Config:
         from_attributes = True
