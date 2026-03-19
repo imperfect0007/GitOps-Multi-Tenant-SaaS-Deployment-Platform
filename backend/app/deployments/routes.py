@@ -7,7 +7,12 @@ from app.models.user import User
 from app.models.tenant import Tenant
 from app.models.project import Project
 from app.schemas.project import ProjectResponse
-from app.deployments.service import get_deployment_status
+from app.deployments.service import (
+    get_deployment_status,
+    list_namespace_deployments,
+    list_namespace_pods,
+    get_pod_logs,
+)
 
 router = APIRouter(tags=["Deployments"])
 
@@ -63,3 +68,50 @@ def deployment_status(
         "platform_status": project.status,
         "kubernetes": k8s_status,
     }
+
+
+def _get_tenant_namespace(tenant_id: int, db: Session, user: User) -> str:
+    tenant = (
+        db.query(Tenant)
+        .filter(Tenant.id == tenant_id, Tenant.owner_id == user.id)
+        .first()
+    )
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    return tenant.namespace
+
+
+@router.get("/tenants/{tenant_id}/k8s/deployments")
+def get_k8s_deployments(
+    tenant_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List Kubernetes deployments in the tenant's namespace."""
+    namespace = _get_tenant_namespace(tenant_id, db, current_user)
+    return list_namespace_deployments(namespace)
+
+
+@router.get("/tenants/{tenant_id}/k8s/pods")
+def get_k8s_pods(
+    tenant_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List pods in the tenant's namespace."""
+    namespace = _get_tenant_namespace(tenant_id, db, current_user)
+    return list_namespace_pods(namespace)
+
+
+@router.get("/tenants/{tenant_id}/k8s/logs/{pod_name}")
+def get_k8s_pod_logs(
+    tenant_id: int,
+    pod_name: str,
+    tail: int = Query(100, ge=10, le=1000),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Fetch logs from a pod in the tenant's namespace."""
+    namespace = _get_tenant_namespace(tenant_id, db, current_user)
+    logs = get_pod_logs(namespace, pod_name, tail_lines=tail)
+    return {"logs": logs, "pod": pod_name, "namespace": namespace}

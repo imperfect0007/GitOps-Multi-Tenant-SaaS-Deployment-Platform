@@ -8,6 +8,7 @@ import TenantList from './pages/TenantList'
 import TenantDetail from './pages/TenantDetail'
 import CreateTenant from './pages/CreateTenant'
 import CreateProject from './pages/CreateProject'
+import Monitoring from './pages/Monitoring'
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route path="tenants/new" element={<CreateTenant />} />
           <Route path="tenants/:id" element={<TenantDetail />} />
           <Route path="projects/new" element={<CreateProject />} />
+          <Route path="monitoring" element={<Monitoring />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

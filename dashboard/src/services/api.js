@@ -52,4 +52,12 @@ export const listDeployments = (tenantId, params = {}) =>
 export const getDeploymentStatus = (projectId) =>
   API.get(`/deployments/${projectId}/status`)
 
+// K8s monitoring (Day 8)
+export const getK8sDeployments = (tenantId) =>
+  API.get(`/tenants/${tenantId}/k8s/deployments`)
+export const getK8sPods = (tenantId) =>
+  API.get(`/tenants/${tenantId}/k8s/pods`)
+export const getPodLogs = (tenantId, podName, params = {}) =>
+  API.get(`/tenants/${tenantId}/k8s/logs/${encodeURIComponent(podName)}`, { params })
+
 export default API
