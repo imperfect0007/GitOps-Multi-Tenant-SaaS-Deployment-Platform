@@ -1,7 +1,8 @@
 # Day 9: CI/CD Pipeline — Build, Push, and optional GitOps update
 # Trigger: push to main
 # Secrets: DOCKER_USERNAME, DOCKER_PASSWORD
-# Optional (for GitOps update): GITOPS_REPO_URL, GITOPS_TOKEN
+# Optional GitOps update: set variable GITOPS_UPDATE_ENABLED = true and secrets GITOPS_REPO_URL, GITOPS_TOKEN
+# (Secrets cannot be used in 'if' conditions, so we use a variable to enable the job.)
 
 name: CI/CD Pipeline
 
@@ -56,7 +57,7 @@ jobs:
   update-gitops:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: ${{ secrets.GITOPS_TOKEN != '' && secrets.GITOPS_REPO_URL != '' }}
+    if: vars.GITOPS_UPDATE_ENABLED == 'true'
 
     steps:
       - name: Clone GitOps repo
