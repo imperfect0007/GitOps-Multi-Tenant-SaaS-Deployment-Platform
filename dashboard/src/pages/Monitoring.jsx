@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { listTenants, getK8sDeployments, getK8sPods, getPodLogs } from '../services/api'
+import { listTenants, listProjects, getK8sDeployments, getK8sPods, getPodLogs } from '../services/api'
 
 const styles = {
   page: { maxWidth: 1000 },
@@ -132,6 +132,8 @@ export default function Monitoring() {
   const [tenantId, setTenantId] = useState('')
   const [deployments, setDeployments] = useState([])
   const [pods, setPods] = useState([])
+  const [projects, setProjects] = useState([])
+  const [clusterReachable, setClusterReachable] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [logModal, setLogModal] = useState(null)
@@ -142,17 +144,22 @@ export default function Monitoring() {
   const fetchK8s = useCallback(async () => {
     if (!tenantId) return
     try {
-      const [dRes, pRes] = await Promise.all([
+      const [dRes, pRes, projRes] = await Promise.all([
         getK8sDeployments(Number(tenantId)),
         getK8sPods(Number(tenantId)),
+        listProjects(Number(tenantId), { limit: 100 }),
       ])
-      setDeployments(Array.isArray(dRes.data) ? dRes.data : [])
+      const k8sDeps = Array.isArray(dRes.data) ? dRes.data : []
+      setDeployments(k8sDeps)
       setPods(Array.isArray(pRes.data) ? pRes.data : [])
+      setProjects(Array.isArray(projRes.data) ? projRes.data : [])
+      setClusterReachable(k8sDeps.length > 0 || (Array.isArray(pRes.data) && pRes.data.length > 0))
       setError('')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load K8s data')
+      setError(err.response?.data?.detail || 'Failed to load data')
       setDeployments([])
       setPods([])
+      setClusterReachable(false)
     } finally {
       setLoading(false)
     }
@@ -235,25 +242,26 @@ export default function Monitoring() {
       ) : !tenantId ? (
         <p style={styles.empty}>Select a tenant to view deployments.</p>
       ) : (
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Deployment</th>
-                <th style={styles.th}>Status</th>
-                <th style={styles.th}>Pods</th>
-                <th style={styles.th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {deployments.length === 0 ? (
+        <>
+        {!clusterReachable && projects.length > 0 && (
+          <div style={{ padding: '12px 16px', background: 'rgba(251,191,36,0.1)', borderRadius: 12, marginBottom: 16, color: '#fbbf24', fontSize: 13 }}>
+            Kubernetes cluster is unreachable. Showing projects from the database. Live pod data will appear when the cluster is running.
+          </div>
+        )}
+
+        {deployments.length > 0 && (
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
+              <thead>
                 <tr>
-                  <td colSpan={4} style={styles.empty}>
-                    No deployments in this namespace. Deploy a project first.
-                  </td>
+                  <th style={styles.th}>Deployment</th>
+                  <th style={styles.th}>Status</th>
+                  <th style={styles.th}>Pods</th>
+                  <th style={styles.th}>Actions</th>
                 </tr>
-              ) : (
-                deployments.map((d) => (
+              </thead>
+              <tbody>
+                {deployments.map((d) => (
                   <tr key={d.name}>
                     <td style={styles.td}>{d.name}</td>
                     <td style={styles.td}>
@@ -282,11 +290,58 @@ export default function Monitoring() {
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {projects.length > 0 && (
+          <div style={{ marginTop: deployments.length > 0 ? 24 : 0 }}>
+            {deployments.length > 0 && <h2 style={{ ...styles.title, fontSize: 18, marginBottom: 12 }}>Platform Projects (Database)</h2>}
+            <div style={styles.tableWrap}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Project</th>
+                    <th style={styles.th}>Image</th>
+                    <th style={styles.th}>Status</th>
+                    <th style={styles.th}>Domain</th>
+                    <th style={styles.th}>Replicas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projects.map((p) => (
+                    <tr key={p.id}>
+                      <td style={styles.td}>{p.name}</td>
+                      <td style={{ ...styles.td, fontFamily: 'ui-monospace, monospace', fontSize: 12 }}>{p.image}</td>
+                      <td style={styles.td}>
+                        <span style={
+                          p.status === 'deployed' ? styles.statusRunning
+                          : p.status?.startsWith('failed') ? styles.statusFailed
+                          : styles.statusPending
+                        }>
+                          {p.status}
+                        </span>
+                      </td>
+                      <td style={{ ...styles.td, fontFamily: 'ui-monospace, monospace', fontSize: 12 }}>
+                        {p.domain || '—'}
+                      </td>
+                      <td style={styles.td}>{p.replicas}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {projects.length === 0 && deployments.length === 0 && (
+          <div style={styles.tableWrap}>
+            <div style={styles.empty}>No deployments yet. Deploy a project first.</div>
+          </div>
+        )}
+        </>
       )}
 
       <p style={styles.refreshNote}>Auto-refresh every 5 seconds</p>

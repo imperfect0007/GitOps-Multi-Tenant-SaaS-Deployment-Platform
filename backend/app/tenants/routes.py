@@ -17,10 +17,18 @@ def create_tenant(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    import re, logging
+    _logger = logging.getLogger(__name__)
+
     if db.query(Tenant).filter(Tenant.name == payload.name).first():
         raise HTTPException(status_code=400, detail="Tenant name already exists")
 
-    namespace = create_kubernetes_namespace(payload.name)
+    try:
+        namespace = create_kubernetes_namespace(payload.name)
+    except Exception as exc:
+        _logger.warning("K8s namespace creation failed (cluster may be down): %s", exc)
+        sanitized = re.sub(r"[^a-z0-9-]", "-", payload.name.lower().strip())
+        namespace = f"tenant-{sanitized}"
 
     tenant = Tenant(
         name=payload.name,

@@ -52,3 +52,9 @@ crash.log
 htmlcov/
 .coverage
 coverage.xml
+
+# Local GitOps repo clone (contains token in remote URL)
+gitops-repo/
+
+# Dashboard env (may contain API URL)
+dashboard/.env

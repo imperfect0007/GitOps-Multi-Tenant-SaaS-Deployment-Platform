@@ -20,33 +20,34 @@ def _sanitize_namespace(name: str) -> str:
 
 
 def create_kubernetes_namespace(tenant_name: str) -> str:
-    _load_k8s_config()
-    v1 = client.CoreV1Api()
+    """Create namespace (and quota, limits, network policy) in Kubernetes. On cluster unreachable, still return namespace name so tenant can be created in DB."""
     namespace = _sanitize_namespace(tenant_name)
-
-    ns_body = client.V1Namespace(
-        metadata=client.V1ObjectMeta(
-            name=namespace,
-            labels={
-                "platform": "gitops-saas",
-                "tenant": namespace,
-                "managed-by": "platform-api",
-            },
-        )
-    )
     try:
-        v1.create_namespace(body=ns_body)
-        logger.info("Created namespace %s", namespace)
-    except ApiException as e:
-        if e.status == 409:
-            logger.info("Namespace %s already exists", namespace)
-        else:
-            raise
-
-    _apply_resource_quota(v1, namespace)
-    _apply_limit_range(v1, namespace)
-    _apply_network_policy(namespace)
-
+        _load_k8s_config()
+        v1 = client.CoreV1Api()
+        ns_body = client.V1Namespace(
+            metadata=client.V1ObjectMeta(
+                name=namespace,
+                labels={
+                    "platform": "gitops-saas",
+                    "tenant": namespace,
+                    "managed-by": "platform-api",
+                },
+            )
+        )
+        try:
+            v1.create_namespace(body=ns_body)
+            logger.info("Created namespace %s", namespace)
+        except ApiException as e:
+            if e.status == 409:
+                logger.info("Namespace %s already exists", namespace)
+            else:
+                raise
+        _apply_resource_quota(v1, namespace)
+        _apply_limit_range(v1, namespace)
+        _apply_network_policy(namespace)
+    except Exception as e:
+        logger.warning("Kubernetes unavailable or error creating namespace %s: %s. Tenant will be created with namespace name; create namespace later when cluster is up.", namespace, e)
     return namespace
 
 

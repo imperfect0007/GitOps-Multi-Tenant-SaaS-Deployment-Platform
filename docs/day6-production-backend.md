@@ -31,28 +31,28 @@ User → Auth (JWT) → DB → Create Tenant → Store Project → Deploy via Gi
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│                    FastAPI App                        │
+│                    FastAPI App                       │
 │                                                      │
-│  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐│
-│  │  Auth   │ │ Tenants  │ │ Projects │ │  Deploy  ││
-│  │ Routes  │ │ Routes   │ │ Routes   │ │  Routes  ││
-│  └────┬────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘│
+│  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │
+│  │  Auth   │ │ Tenants  │ │ Projects │ │  Deploy  │  │
+│  │ Routes  │ │ Routes   │ │ Routes   │ │  Routes  │  │
+│  └────┬────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘  │
 │       │           │            │             │       │
-│  ┌────▼───────────▼────────────▼─────────────▼─────┐│
-│  │              Service Layer                       ││
-│  │  security.py │ tenants/service │ projects/service││
-│  │              │ gitops/service  │ deploy/service  ││
-│  └────┬───────────┬────────────┬─────────────┬─────┘│
+│  ┌────▼───────────▼────────────▼─────────────▼─────┐ │
+│  │                Service Layer                    │ │
+│  │  security.py │ tenants/service │projects/service│ │
+│  │              │ gitops/service  │deploy/service  │ │
+│  └────┬───────────┬────────────┬─────────────┬─────┘ │
 │       │           │            │             │       │
-│  ┌────▼───────────▼────────────▼─────────────▼─────┐│
-│  │            Database Layer (SQLAlchemy)            ││
-│  │   User │ Tenant │ Project   (via Alembic)        ││
-│  └──────────────────┬──────────────────────────────┘│
-│                      │                               │
-│  ┌──────────────────▼──────────────────────────────┐│
-│  │         Infrastructure Layer                     ││
-│  │   Kubernetes API │ GitOps Repo │ ArgoCD          ││
-│  └──────────────────────────────────────────────────┘│
+│  ┌────▼───────────▼────────────▼─────────────▼─────┐ │
+│  │            Database Layer (SQLAlchemy)          │ │
+│  │   User │ Tenant │ Project   (via Alembic)       │ │
+│  └──────────────────┬──────────────────────────────┘ │
+│                     │                                │
+│  ┌──────────────────▼──────────────────────────────┐ │
+│  │         Infrastructure Layer                    │ │
+│  │   Kubernetes API │ GitOps Repo │ ArgoCD         │ │
+│  └─────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────┘
 ```
 

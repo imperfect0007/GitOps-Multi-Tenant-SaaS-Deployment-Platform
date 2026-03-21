@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
@@ -37,8 +38,14 @@ def list_deployments(
     query = db.query(Project).filter(Project.tenant_id == tenant_id)
     if status_filter:
         query = query.filter(Project.status == status_filter)
-
-    return query.order_by(Project.created_at.desc()).offset(skip).limit(limit).all()
+    projects = query.order_by(Project.created_at.desc()).offset(skip).limit(limit).all()
+    # Include domain in response when BASE_DOMAIN is set (same as list_projects)
+    return [
+        ProjectResponse.model_validate(p).model_copy(
+            update={"domain": f"{p.name}.{tenant.namespace}.{settings.BASE_DOMAIN}" if settings.BASE_DOMAIN else None}
+        )
+        for p in projects
+    ]
 
 
 @router.get("/deployments/{project_id}/status")
